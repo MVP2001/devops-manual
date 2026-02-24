@@ -1,12 +1,13 @@
 package monitoring
 
 import (
+	"database/sql"
 	"devops-manual/internal/models"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
-	"runtime"
+	"strings"
 	"time"
 
 	"github.com/shirou/gopsutil/cpu"

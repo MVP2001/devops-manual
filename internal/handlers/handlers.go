@@ -4,8 +4,9 @@ import (
 	"devops-manual/internal/database"
 	"devops-manual/internal/models"
 	"devops-manual/internal/monitoring"
+	"fmt"
 	"net/http"
-	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -18,7 +19,7 @@ type Handler struct {
 func New(db *database.DB) *Handler {
 	return &Handler{
 		DB:      db,
-		Monitor: monitoring.NewMonitor(db),
+		Monitor: monitoring.NewMonitor(db.DB),
 	}
 }
 
@@ -47,6 +48,12 @@ func (h *Handler) GetTopics(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, topics)
+}
+
+func (h *Handler) GetLabsByTopic(c *gin.Context) {
+	topic := c.Param("topic")
+	// Заглушка - нужно добавить метод в database
+	c.JSON(http.StatusOK, gin.H{"topic": topic, "labs": []models.Lab{}})
 }
 
 func (h *Handler) CreateLab(c *gin.Context) {
