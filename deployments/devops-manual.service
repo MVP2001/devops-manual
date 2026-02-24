@@ -1,0 +1,15 @@
+[Unit]
+Description=DevOps Manual Web Service
+After=network.target postgresql.service
+
+[Service]
+Type=simple
+User=www-data
+WorkingDirectory=/var/www/devops-manual
+ExecStart=/usr/local/go/bin/go run cmd/main.go
+Restart=always
+RestartSec=5
+Environment=GO_ENV=production
+
+[Install]
+WantedBy=multi-user.target
