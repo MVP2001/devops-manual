@@ -27,6 +27,60 @@
             position: relative;
             z-index: 1;
         }
+        
+        /* Логин слева сверху */
+        .auth-box {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 20, 0, 0.9);
+            border: 1px solid #00ff88;
+            padding: 15px;
+            border-radius: 10px;
+            z-index: 1000;
+            min-width: 200px;
+        }
+        .auth-box input {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            background: #001100;
+            border: 1px solid #00ff88;
+            color: #00ff88;
+            font-family: inherit;
+        }
+        .auth-box button {
+            width: 100%;
+            padding: 8px;
+            background: #00ff88;
+            color: #000;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .auth-box .user-info {
+            display: none;
+        }
+        .auth-box.logged-in .login-form {
+            display: none;
+        }
+        .auth-box.logged-in .user-info {
+            display: block;
+        }
+        
+        /* Метрики справа */
+        .metrics {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 20, 0, 0.9);
+            border: 1px solid #00ff88;
+            padding: 20px;
+            border-radius: 10px;
+            font-size: 0.9em;
+            z-index: 1000;
+        }
+        
         header {
             text-align: center;
             margin-bottom: 60px;
@@ -34,21 +88,17 @@
             background: rgba(0, 20, 0, 0.8);
             border: 1px solid #00ff88;
             border-radius: 10px;
+            margin-top: 100px;
         }
         h1 {
             font-size: 3em;
             text-shadow: 0 0 20px #00ff88;
             margin-bottom: 10px;
         }
-        .subtitle {
-            color: #888;
-            font-size: 1.2em;
-        }
         .grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
             gap: 30px;
-            margin-bottom: 40px;
         }
         .card {
             background: rgba(0, 20, 0, 0.9);
@@ -56,7 +106,9 @@
             padding: 30px;
             border-radius: 10px;
             transition: all 0.3s;
-            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+            display: block;
         }
         .card:hover {
             transform: translateY(-5px);
@@ -71,141 +123,56 @@
             color: #aaa;
             line-height: 1.6;
         }
-        .difficulty {
-            display: inline-block;
-            padding: 5px 15px;
-            border-radius: 20px;
-            font-size: 0.8em;
+        .card .arrow {
             margin-top: 15px;
-        }
-        .easy { background: #00ff88; color: #000; }
-        .medium { background: #ffaa00; color: #000; }
-        .hard { background: #ff0044; color: #fff; }
-        
-        .form-section {
-            background: rgba(0, 20, 0, 0.9);
-            border: 1px solid #00ff88;
-            padding: 40px;
-            border-radius: 10px;
-            margin-top: 40px;
-        }
-        .form-group {
-            margin-bottom: 20px;
-        }
-        label {
-            display: block;
-            margin-bottom: 8px;
             color: #00ff88;
-        }
-        input, textarea, select {
-            width: 100%;
-            padding: 12px;
-            background: #001100;
-            border: 1px solid #00ff88;
-            color: #00ff88;
-            font-family: inherit;
-            border-radius: 5px;
-        }
-        button {
-            background: #00ff88;
-            color: #000;
-            border: none;
-            padding: 15px 40px;
-            font-size: 1.1em;
-            font-weight: bold;
-            cursor: pointer;
-            border-radius: 5px;
-            transition: all 0.3s;
-        }
-        button:hover {
-            background: #00cc6a;
-            transform: scale(1.05);
-        }
-        .metrics {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: rgba(0, 20, 0, 0.9);
-            border: 1px solid #00ff88;
-            padding: 20px;
-            border-radius: 10px;
-            font-size: 0.9em;
-        }
-        .metric-item {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 10px;
-            min-width: 200px;
         }
     </style>
 </head>
 <body>
     <canvas id="matrix-canvas"></canvas>
     
+    <!-- Логин слева -->
+    <div class="auth-box" id="auth-box">
+        <div class="login-form">
+            <input type="text" id="username" placeholder="Логин">
+            <input type="password" id="password" placeholder="Пароль">
+            <button onclick="login()">Войти</button>
+        </div>
+        <div class="user-info">
+            <p>Привет, <span id="user-name"></span>!</p>
+            <button onclick="logout()">Выйти</button>
+        </div>
+    </div>
+    
+    <!-- Метрики справа -->
     <div class="metrics" id="metrics">
-        <div class="metric-item">
-            <span>CPU:</span>
-            <span id="cpu">0%</span>
-        </div>
-        <div class="metric-item">
-            <span>RAM:</span>
-            <span id="ram">0%</span>
-        </div>
-        <div class="metric-item">
-            <span>Disk:</span>
-            <span id="disk">0%</span>
-        </div>
+        <div>CPU: <span id="cpu">0%</span></div>
+        <div>RAM: <span id="ram">0%</span></div>
+        <div>Disk: <span id="disk">0%</span></div>
     </div>
 
     <div class="container">
         <header>
             <h1>⚡ DevOps Manual</h1>
-            <p class="subtitle">Практический мануал по DevOps с живыми примерами</p>
+            <p style="color: #888;">Практический мануал по DevOps</p>
         </header>
 
-        <div class="grid" id="topics-grid">
-            <!-- Темы загружаются через JS -->
-        </div>
-
-        <div class="form-section">
-            <h2>🚀 Создать новую лабораторную работу</h2>
-            <form id="lab-form">
-                <div class="form-group">
-                    <label>Тема</label>
-                    <select id="topic-select" required>
-                        <option value="">Выберите тему</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Название лабы</label>
-                    <input type="text" id="lab-title" required placeholder="Например: Настройка Docker Compose">
-                </div>
-                <div class="form-group">
-                    <label>Описание</label>
-                    <textarea id="lab-content" rows="4" required placeholder="Описание задачи..."></textarea>
-                </div>
-                <div class="form-group">
-                    <label>Команды (через запятую)</label>
-                    <textarea id="lab-commands" rows="3" placeholder="docker-compose up -d, docker ps..."></textarea>
-                </div>
-                <div class="form-group">
-                    <label>Сложность</label>
-                    <select id="lab-difficulty">
-                        <option value="easy">Легкая</option>
-                        <option value="medium">Средняя</option>
-                        <option value="hard">Сложная</option>
-                    </select>
-                </div>
-                <button type="submit">Создать лабу</button>
-            </form>
+        <div class="grid">
+            {{range .topics}}
+            <a href="/topic/{{.Slug}}" class="card">
+                <h3>{{.Title}}</h3>
+                <p>{{.Description}}</p>
+                <div class="arrow">→ Изучить</div>
+            </a>
+            {{end}}
         </div>
     </div>
 
     <script>
-        // Matrix rain effect
+        // Matrix эффект
         const canvas = document.getElementById('matrix-canvas');
         const ctx = canvas.getContext('2d');
-        
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
         
@@ -214,114 +181,73 @@
         const columns = canvas.width / fontSize;
         const drops = [];
         
-        for (let i = 0; i < columns; i++) {
-            drops[i] = Math.random() * -100;
-        }
+        for (let i = 0; i < columns; i++) drops[i] = Math.random() * -100;
         
         function drawMatrix() {
             ctx.fillStyle = 'rgba(10, 10, 10, 0.05)';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
             ctx.fillStyle = '#00ff88';
             ctx.font = fontSize + 'px monospace';
             
             for (let i = 0; i < drops.length; i++) {
                 const text = chars[Math.floor(Math.random() * chars.length)];
                 ctx.fillText(text, i * fontSize, drops[i] * fontSize);
-                
-                if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
-                    drops[i] = 0;
-                }
+                if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) drops[i] = 0;
                 drops[i]++;
             }
         }
-        
         setInterval(drawMatrix, 35);
         
-        // Load topics
-        async function loadTopics() {
+        // Auth
+        async function checkAuth() {
             try {
-                const response = await fetch('/api/topics');
-                const topics = await response.json();
-                const grid = document.getElementById('topics-grid');
-                const select = document.getElementById('topic-select');
-                
-                topics.forEach(topic => {
-                    // Add to grid
-                    const card = document.createElement('div');
-                    card.className = 'card';
-                    card.innerHTML = `
-                        <h3>${topic.title}</h3>
-                        <p>${topic.description}</p>
-                        <span class="difficulty easy">Изучить →</span>
-                    `;
-                    grid.appendChild(card);
-                    
-                    // Add to select
-                    const option = document.createElement('option');
-                    option.value = topic.id;
-                    option.textContent = topic.title;
-                    select.appendChild(option);
-                });
-            } catch (error) {
-                console.error('Error loading topics:', error);
+                const res = await fetch('/api/auth/check');
+                const data = await res.json();
+                if (data.authenticated) {
+                    document.getElementById('auth-box').classList.add('logged-in');
+                }
+            } catch (e) {}
+        }
+        
+        async function login() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            const res = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({username, password})
+            });
+            
+            if (res.ok) {
+                const data = await res.json();
+                document.getElementById('user-name').textContent = data.user;
+                document.getElementById('auth-box').classList.add('logged-in');
+            } else {
+                alert('Ошибка входа');
             }
         }
         
-        // Update metrics
+        async function logout() {
+            await fetch('/api/auth/logout', {method: 'POST'});
+            document.getElementById('auth-box').classList.remove('logged-in');
+        }
+        
+        // Metrics
         async function updateMetrics() {
             try {
-                const response = await fetch('/api/metrics');
-                const data = await response.json();
+                const res = await fetch('/api/metrics');
+                const data = await res.json();
                 document.getElementById('cpu').textContent = data.cpu_usage.toFixed(1) + '%';
                 document.getElementById('ram').textContent = data.memory_usage.toFixed(1) + '%';
                 document.getElementById('disk').textContent = data.disk_usage.toFixed(1) + '%';
-            } catch (error) {
-                console.error('Error fetching metrics:', error);
-            }
+            } catch (e) {}
         }
         
-        // Form submission
-        document.getElementById('lab-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const commands = document.getElementById('lab-commands').value
-                .split(',')
-                .map(cmd => cmd.trim())
-                .filter(cmd => cmd);
-            
-            const data = {
-                topic_id: parseInt(document.getElementById('topic-select').value),
-                title: document.getElementById('lab-title').value,
-                content: document.getElementById('lab-content').value,
-                commands: commands,
-                difficulty: document.getElementById('lab-difficulty').value
-            };
-            
-            try {
-                const response = await fetch('/api/labs', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify(data)
-                });
-                
-                if (response.ok) {
-                    alert('Лабораторная работа создана! Уведомление отправлено в Telegram.');
-                    document.getElementById('lab-form').reset();
-                } else {
-                    alert('Ошибка при создании');
-                }
-            } catch (error) {
-                console.error('Error:', error);
-            }
-        });
-        
-        // Init
-        loadTopics();
+        checkAuth();
         updateMetrics();
         setInterval(updateMetrics, 5000);
         
-        // Resize handler
         window.addEventListener('resize', () => {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;

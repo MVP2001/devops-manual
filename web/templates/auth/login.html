@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Login - DevOps Manual</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background: #0a0a0a;
+            color: #00ff88;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .login-box {
+            background: rgba(0, 20, 0, 0.9);
+            border: 1px solid #00ff88;
+            padding: 40px;
+            border-radius: 10px;
+            width: 300px;
+        }
+        h2 { text-align: center; margin-bottom: 20px; }
+        input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            background: #001100;
+            border: 1px solid #00ff88;
+            color: #00ff88;
+            font-family: inherit;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            background: #00ff88;
+            color: #000;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-box">
+        <h2>🔐 Вход</h2>
+        <input type="text" id="username" placeholder="Логин">
+        <input type="password" id="password" placeholder="Пароль">
+        <button onclick="login()">Войти</button>
+    </div>
+    <script>
+        async function login() {
+            const res = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    username: document.getElementById('username').value,
+                    password: document.getElementById('password').value
+                })
+            });
+            if (res.ok) {
+                location.href = '/';
+            } else {
+                alert('Ошибка входа');
+            }
+        }
+    </script>
+</body>
+</html>

@@ -3,9 +3,9 @@ package main
 import (
 	"devops-manual/internal/database"
 	"devops-manual/internal/handlers"
+	"html/template"
 	"log"
 	"os"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
@@ -29,14 +29,35 @@ func main() {
 	// Настройка Gin
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.Default()
-	r.LoadHTMLGlob("web/templates/*")
+	
+	// Загрузка шаблонов с правильными именами
+	tmpl := template.New("")
+	
+	// Загружаем каждый файл с явным указанием имени
+	files := map[string]string{
+		"index.html":       "web/templates/index.html",
+		"topic/topic.html": "web/templates/topic/topic.html",
+		"lab/lab.html":     "web/templates/lab/lab.html",
+		"auth/login.html":  "web/templates/auth/login.html",
+	}
+	
+	for name, path := range files {
+		content, err := os.ReadFile(path)
+		if err != nil {
+			log.Fatal("Failed to read template", name, ":", err)
+		}
+		tmpl, err = tmpl.New(name).Parse(string(content))
+		if err != nil {
+			log.Fatal("Failed to parse template", name, ":", err)
+		}
+		log.Println("Loaded template:", name)
+	}
+	
+	r.SetHTMLTemplate(tmpl)
 
 	// Инициализация обработчиков
 	h := handlers.New(db)
 	h.RegisterRoutes(r)
-
-	// Запуск мониторинга
-	h.Monitor.StartMonitoring(5 * time.Minute)
 
 	port := os.Getenv("SERVER_PORT")
 	if port == "" {
