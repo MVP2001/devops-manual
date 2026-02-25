@@ -34,14 +34,6 @@
             border-radius: 10px;
             margin-bottom: 30px;
         }
-        .content h2 {
-            color: #00ff88;
-            margin: 20px 0 10px;
-        }
-        .content p {
-            margin-bottom: 15px;
-            color: #ccc;
-        }
         .commands {
             background: #001100;
             border: 1px solid #003300;
@@ -88,21 +80,65 @@
         .edit-panel textarea {
             min-height: 200px;
         }
-        .edit-btn {
+        .admin-btns {
             position: fixed;
             bottom: 30px;
             right: 30px;
+            display: none;
+            gap: 10px;
+        }
+        .admin-btns.visible {
+            display: flex;
+        }
+        .btn {
             padding: 15px 30px;
-            background: #00ff88;
-            color: #000;
             border: none;
             border-radius: 5px;
             cursor: pointer;
             font-weight: bold;
-            display: none;
         }
-        .edit-btn.visible {
+        .btn-edit {
+            background: #00ff88;
+            color: #000;
+        }
+        .btn-delete {
+            background: #ff0044;
+            color: #fff;
+        }
+        .confirm-dialog {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #001100;
+            border: 2px solid #ff0044;
+            padding: 40px;
+            border-radius: 10px;
+            z-index: 2000;
+            text-align: center;
+        }
+        .confirm-dialog.active {
             display: block;
+        }
+        .confirm-dialog h3 {
+            color: #ff0044;
+            margin-bottom: 20px;
+        }
+        .confirm-dialog button {
+            margin: 10px;
+            padding: 10px 30px;
+            cursor: pointer;
+        }
+        .confirm-yes {
+            background: #ff0044;
+            color: #fff;
+            border: none;
+        }
+        .confirm-no {
+            background: #333;
+            color: #fff;
+            border: none;
         }
     </style>
 </head>
@@ -131,7 +167,10 @@
         </p>
     </div>
     
-    <button class="edit-btn" id="edit-btn" onclick="toggleEdit()">✏️ Редактировать</button>
+    <div class="admin-btns" id="admin-btns">
+        <button class="btn btn-edit" onclick="toggleEdit()">✏️ Редактировать</button>
+        <button class="btn btn-delete" onclick="showDeleteConfirm()">🗑️ Удалить</button>
+    </div>
     
     <div class="edit-panel" id="edit-panel">
         <div class="container">
@@ -151,28 +190,44 @@
         </div>
     </div>
     
+    <div class="confirm-dialog" id="confirm-dialog">
+        <h3>⚠️ Удалить эту лабу?</h3>
+        <p>Это действие нельзя отменить!</p>
+        <button class="confirm-yes" onclick="deleteLab()">Да, удалить</button>
+        <button class="confirm-no" onclick="hideDeleteConfirm()">Отмена</button>
+    </div>
+    
     <script>
         const labId = {{.lab.ID}};
-        
+        const topicSlug = '{{.lab.Topic.Slug}}';
+
         // Проверяем авторизацию
         fetch('/api/auth/check')
             .then(r => r.json())
             .then(data => {
                 if (data.authenticated) {
-                    document.getElementById('edit-btn').classList.add('visible');
+                    document.getElementById('admin-btns').classList.add('visible');
                 }
             });
-        
+
         function toggleEdit() {
             document.getElementById('edit-panel').classList.toggle('active');
         }
-        
+
+        function showDeleteConfirm() {
+            document.getElementById('confirm-dialog').classList.add('active');
+        }
+
+        function hideDeleteConfirm() {
+            document.getElementById('confirm-dialog').classList.remove('active');
+        }
+
         function copyToClipboard(el) {
             navigator.clipboard.writeText(el.textContent);
             el.style.background = '#004400';
             setTimeout(() => el.style.background = '#000', 200);
         }
-        
+
         async function saveLab() {
             const data = {
                 id: labId,
@@ -181,17 +236,29 @@
                 commands: document.getElementById('edit-commands').value.split('\n').filter(c => c.trim()),
                 difficulty: document.getElementById('edit-difficulty').value
             };
-            
+
             const res = await fetch('/api/labs/' + labId, {
                 method: 'PUT',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify(data)
             });
-            
+
             if (res.ok) {
                 location.reload();
             } else {
                 alert('Ошибка сохранения');
+            }
+        }
+
+        async function deleteLab() {
+            const res = await fetch('/api/labs/' + labId, {
+                method: 'DELETE'
+            });
+
+            if (res.ok) {
+                location.href = '/topic/' + topicSlug;
+            } else {
+                alert('Ошибка удаления');
             }
         }
     </script>
