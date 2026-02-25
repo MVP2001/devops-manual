@@ -5,6 +5,7 @@ import (
 	"devops-manual/internal/models"
 	"devops-manual/internal/monitoring"
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 	"time"
@@ -44,9 +45,9 @@ func (h *Handler) RegisterRoutes(r *gin.Engine) {
 	r.POST("/api/auth/logout", h.Logout)
 	r.GET("/api/auth/check", h.CheckAuth)
 	
-	// HTML страницы - БЕЗ КОНФЛИКТОВ
-	r.GET("/topic/:slug", h.TopicPage)           // /topic/docker
-	r.GET("/lab/:topic/:lab", h.LabPage)         // /lab/docker/container-run
+	// HTML страницы
+	r.GET("/topic/:slug", h.TopicPage)
+	r.GET("/lab/:topic/:lab", h.LabPage)
 	r.GET("/login", h.LoginPage)
 	
 	// Health
@@ -67,6 +68,7 @@ func (h *Handler) Index(c *gin.Context) {
 func (h *Handler) GetTopics(c *gin.Context) {
 	topics, err := h.DB.GetTopics()
 	if err != nil {
+		log.Println("ERROR GetTopics:", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -77,6 +79,7 @@ func (h *Handler) GetTopicAPI(c *gin.Context) {
 	slug := c.Param("slug")
 	topic, err := h.DB.GetTopicBySlug(slug)
 	if err != nil {
+		log.Println("ERROR GetTopicAPI:", err)
 		c.JSON(http.StatusNotFound, gin.H{"error": "Topic not found"})
 		return
 	}
@@ -87,6 +90,7 @@ func (h *Handler) GetLabsAPI(c *gin.Context) {
 	slug := c.Param("slug")
 	labs, err := h.DB.GetLabsByTopicSlug(slug)
 	if err != nil {
+		log.Println("ERROR GetLabsAPI:", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -98,6 +102,7 @@ func (h *Handler) GetLabAPI(c *gin.Context) {
 	labSlug := c.Param("lab")
 	lab, err := h.DB.GetLabBySlug(topicSlug, labSlug)
 	if err != nil {
+		log.Println("ERROR GetLabAPI:", err)
 		c.JSON(http.StatusNotFound, gin.H{"error": "Lab not found"})
 		return
 	}
@@ -105,17 +110,24 @@ func (h *Handler) GetLabAPI(c *gin.Context) {
 }
 
 func (h *Handler) CreateLab(c *gin.Context) {
+	log.Println("DEBUG: CreateLab called")
+	
 	var lab models.Lab
 	if err := c.ShouldBindJSON(&lab); err != nil {
+		log.Println("ERROR: Failed to bind JSON:", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+	
+	log.Printf("DEBUG: Lab data: %+v", lab)
 
 	if err := h.DB.CreateLab(&lab); err != nil {
+		log.Println("ERROR: Failed to create lab:", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
+	log.Println("DEBUG: Lab created successfully, ID:", lab.ID)
 	h.Monitor.SendAlert(fmt.Sprintf("📝 Новая лаба создана: %s", lab.Title))
 	c.JSON(http.StatusCreated, lab)
 }
@@ -123,6 +135,7 @@ func (h *Handler) CreateLab(c *gin.Context) {
 func (h *Handler) UpdateLab(c *gin.Context) {
 	var lab models.Lab
 	if err := c.ShouldBindJSON(&lab); err != nil {
+		log.Println("ERROR UpdateLab bind:", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
@@ -131,6 +144,7 @@ func (h *Handler) UpdateLab(c *gin.Context) {
 	lab.ID = id
 	
 	if err := h.DB.UpdateLab(&lab); err != nil {
+		log.Println("ERROR UpdateLab:", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -141,6 +155,7 @@ func (h *Handler) UpdateLab(c *gin.Context) {
 func (h *Handler) DeleteLab(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
 	if err := h.DB.DeleteLab(id); err != nil {
+		log.Println("ERROR DeleteLab:", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -152,6 +167,7 @@ func (h *Handler) TopicPage(c *gin.Context) {
 	slug := c.Param("slug")
 	topic, err := h.DB.GetTopicBySlug(slug)
 	if err != nil {
+		log.Println("ERROR TopicPage:", err)
 		c.HTML(http.StatusNotFound, "404.html", nil)
 		return
 	}
@@ -171,6 +187,7 @@ func (h *Handler) LabPage(c *gin.Context) {
 	
 	lab, err := h.DB.GetLabBySlug(topicSlug, labSlug)
 	if err != nil {
+		log.Println("ERROR LabPage:", err)
 		c.HTML(http.StatusNotFound, "404.html", nil)
 		return
 	}
@@ -195,17 +212,20 @@ func (h *Handler) Login(c *gin.Context) {
 	}
 	
 	if err := c.ShouldBindJSON(&req); err != nil {
+		log.Println("ERROR Login bind:", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
 		return
 	}
 
 	user, err := h.DB.GetUserByUsername(req.Username)
 	if err != nil {
+		log.Println("ERROR Login user not found:", err)
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
 		return
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)); err != nil {
+		log.Println("ERROR Login password mismatch")
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
 		return
 	}
@@ -242,6 +262,7 @@ func (h *Handler) AuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		token, err := c.Cookie("session")
 		if err != nil {
+			log.Println("ERROR AuthMiddleware: no cookie")
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 			c.Abort()
 			return
@@ -249,6 +270,7 @@ func (h *Handler) AuthMiddleware() gin.HandlerFunc {
 
 		session := h.DB.GetSession(token)
 		if session == nil {
+			log.Println("ERROR AuthMiddleware: invalid session")
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Session expired"})
 			c.Abort()
 			return
@@ -262,6 +284,7 @@ func (h *Handler) AuthMiddleware() gin.HandlerFunc {
 func (h *Handler) GetMetrics(c *gin.Context) {
 	metrics, err := h.Monitor.GetMetrics()
 	if err != nil {
+		log.Println("ERROR GetMetrics:", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
