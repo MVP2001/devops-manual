@@ -3,6 +3,7 @@ package main
 import (
 	"devops-manual/internal/database"
 	"devops-manual/internal/handlers"
+	"flag"
 	"html/template"
 	"log"
 	"os"
@@ -12,6 +13,10 @@ import (
 )
 
 func main() {
+	// Флаг для создания админа
+	createAdmin := flag.Bool("create-admin", false, "Create admin user")
+	flag.Parse()
+
 	godotenv.Load()
 
 	// Подключение к БД
@@ -26,6 +31,20 @@ func main() {
 		log.Fatal("Failed to init schema:", err)
 	}
 
+	// Создание админа и выход
+	if *createAdmin {
+		password := os.Getenv("ADMIN_PASSWORD")
+		if password == "" {
+			password = "admin123"
+		}
+		if err := db.CreateUser("admin", password, true); err != nil {
+			log.Println("Admin creation error (may already exist):", err)
+		} else {
+			log.Println("✅ Admin created successfully")
+		}
+		return
+	}
+
 	// Настройка Gin
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.Default()
@@ -33,7 +52,6 @@ func main() {
 	// Загрузка шаблонов с правильными именами
 	tmpl := template.New("")
 	
-	// Загружаем каждый файл с явным указанием имени
 	files := map[string]string{
 		"index.html":       "web/templates/index.html",
 		"topic/topic.html": "web/templates/topic/topic.html",
@@ -50,7 +68,6 @@ func main() {
 		if err != nil {
 			log.Fatal("Failed to parse template", name, ":", err)
 		}
-		log.Println("Loaded template:", name)
 	}
 	
 	r.SetHTMLTemplate(tmpl)

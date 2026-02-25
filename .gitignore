@@ -32,3 +32,11 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Docker
+.env
+.env.docker
+certbot/
+postgres_data/
+*.pem
+*.key
